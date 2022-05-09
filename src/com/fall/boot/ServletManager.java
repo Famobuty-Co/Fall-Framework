@@ -3,7 +3,6 @@ package com.fall.boot;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.http.HttpRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,10 +14,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.reflections.Reflections;
-import com.fall.ui.Model;
 import com.fall.persistence.EntityManager;
 import com.fall.stereotype.Controler;
+import com.fall.ui.Model;
+import com.reflections.Reflections;
 
 /**
  * Servlet implementation class ServletManager
@@ -126,6 +125,12 @@ public class ServletManager extends HttpServlet {
 			String url = view.replaceFirst("redirect:", "");
 			response.sendRedirect(url);
 		}
+	}
+	public static EntityManager getEntitiesManager() {
+		return em;
+	}
+	public static void setEntitiesManager(EntityManager em) {
+		ServletManager.em = em;
 	}
 	private class ConcretModel implements Model{
 		private HttpServletRequest request;

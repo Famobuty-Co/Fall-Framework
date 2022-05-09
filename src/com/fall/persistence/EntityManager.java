@@ -8,8 +8,8 @@ import com.reflections.Reflections;
 
 public class EntityManager {
 	private static Reflections reflections = new Reflections("entities");
-	private HashMap<String, Table> tables = new HashMap<String, Table>();
-	public Table get(String string) {
+	private HashMap<String, Table<?>> tables = new HashMap<String, Table<?>>();
+	public Table<?> get(String string) {
 		return tables.get(string);
 	}
 	
