@@ -3,6 +3,7 @@ package com.fall.boot;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.http.HttpRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,15 +15,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.reflections.Reflections;
+import com.fall.ui.Model;
 import com.fall.persistence.EntityManager;
 import com.fall.stereotype.Controler;
-import com.fall.ui.Model;
-import com.reflections.Reflections;
 
 /**
  * Servlet implementation class ServletManager
  */
-@WebServlet("/")
 public class ServletManager extends HttpServlet {
 	private static EntityManager em = EntityManager.createInstance();
 	private static Reflections reflections = new Reflections("controlers");
@@ -53,7 +53,7 @@ public class ServletManager extends HttpServlet {
 				String value = c.value();
 				logs.append(value+"\n");
 				if(url.startsWith(value)) {
-					System.out.println("URL : "+url+";Controler : "+value);
+					logs.append("URL : "+url+";Controler : "+value);
 					for (Method method_controler : controler.getDeclaredMethods()) {
 			            if (method_controler.isAnnotationPresent(com.fall.web.bind.annotation.Method.class)) {
 			                method_controler.setAccessible(true);
@@ -61,9 +61,8 @@ public class ServletManager extends HttpServlet {
 			                logs.append(value+mt.value()+"\n");
 			                logs.append(mt.method()+"\n");
 			                String page = (value+mt.value()).replaceAll("//", "/");
-			                System.out.println("URL : "+url+";Page : "+page);
+			                logs.append("URL : "+url+";Page : "+page);
 			                if(method.equals(mt.method()) && url.startsWith(page) && page.length()>lastChoice.length()) {
-			                	System.out.println("< selected >");
 			                	lastChoice = page;
 			                	try {
 			                		Object control_obj = this.controlers.get(value);
@@ -88,7 +87,12 @@ public class ServletManager extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		System.out.println(request.getRequestURI());
 		Model mdl = new ConcretModel(request);
+		Map<String, String[]> rmp = request.getParameterMap();
 
+		for( String parm : rmp.keySet()) {
+			mdl.setAttribute(parm, rmp.get(parm));
+		}
+		
 		String view = matcher(request, mdl);
 
 		if(view==null) return;
@@ -126,12 +130,6 @@ public class ServletManager extends HttpServlet {
 			response.sendRedirect(url);
 		}
 	}
-	public static EntityManager getEntitiesManager() {
-		return em;
-	}
-	public static void setEntitiesManager(EntityManager em) {
-		ServletManager.em = em;
-	}
 	private class ConcretModel implements Model{
 		private HttpServletRequest request;
 		ConcretModel (HttpServletRequest request){
@@ -160,12 +158,28 @@ public class ServletManager extends HttpServlet {
 		}
 		@Override
 		public String getAttributeAsString(String name) {
-			String[] strs = (String[]) request.getAttribute(name);
-			return strs[0];
+			Object obj = request.getAttribute(name);
+			if(obj==null)return null;
+			try {
+				String[] strs = (String[]) obj;				
+				return strs[0];
+			}catch(Exception e){
+				return null;
+			}
 		}
 		@Override
 		public HttpServletRequest getRequest() {
 			return (HttpServletRequest) request;
+		}
+		@Override
+		public double getAttributeAsNumber(String string) {
+			String str = getAttributeAsString(string);
+			Double d = Double.parseDouble(str);
+			return d;
+		}
+		@Override
+		public boolean hasAttribute(String string) {
+			return getAttribute(string)!=null;
 		}
 		
 	}
